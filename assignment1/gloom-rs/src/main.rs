@@ -75,7 +75,7 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     // * Configure a VAP for the data and enable it
     gl::VertexAttribPointer(
         0, 
-        2, 
+        3, 
         gl::FLOAT, 
         gl::FALSE, 
         0, 
@@ -175,13 +175,13 @@ fn main() {
         // This snippet is not enough to do the exercise, and will need to be modified (outside
         // of just using the correct path), but it only needs to be called once
 
-        /*
+        
         let simple_shader = unsafe {
             shader::ShaderBuilder::new()
-                .attach_file("./path/to/simple/shader.file")
+                .attach_file("../simple.frag")
                 .link()
         };
-        */
+        
 
 
         // Used to demonstrate keyboard handling for exercise 2.
