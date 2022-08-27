@@ -1,0 +1,1 @@
+C:\Users\Ola\TDT4195\assignment1\gloom-rs\target\debug\gloom-rs.exe: C:\Users\Ola\TDT4195\assignment1\gloom-rs\src\main.rs C:\Users\Ola\TDT4195\assignment1\gloom-rs\src\shader.rs C:\Users\Ola\TDT4195\assignment1\gloom-rs\src\util.rs
