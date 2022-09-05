@@ -2,10 +2,9 @@
 # This is a YAML preamble, defining pandoc meta-variables.
 # Reference: https://pandoc.org/MANUAL.html#variables
 # Change them as you see fit.
-title: TDT4195 Exercise X
+title: TDT4195 Exercise 1
 author:
-- Gyrd Bannamule Gyrdsson
-- Gjavleik Britonis Podebusk
+- Ola Fivelstad Smaaberg
 date: \today # This is a latex command, ignored for HTML output
 lang: en-US
 papersize: a4
@@ -27,94 +26,71 @@ links-as-notes: true
 This is a HTML-style comment, not visible in the final PDF.
 -->
 
-# Heading
+# Task 1
 
-## Subheading
+## a)
+In code
 
-### Subsubheading
+## b)
+In code
 
-This is a paragraph.
-This is the same paragraph.
+## c)
+![5 disctinct triangles](images/task_c_5_triangles.png)
 
-This is a new paragraph, with *italic*, **bold**, and `inline code` formatting.
-It is possible to use special classes to format text: [this is a test]{.smallcaps}.
+# Task 2
 
-```rust
-//this is a code block with rust syntax highlighting
-println!("Hello, {}", 42);
-```
+## a)
+![clipping](images/clipping.png)
 
-[This](https://www.ntnu.no) is a link.
-[This][] is also a link. <!-- defined below -->
-This[^this_is_a_unique_footnote_label] is a footnote. <!-- defined below -->
-This^[Footnotes can also be written inline] is also a footnote.
+### i
+The phenomenon is called clipping
 
+### ii
+Clipping occurs when the triangle is drawn outside the clip space, -1.0 to 1.0 in the x, y and z axis
 
-[This]: https://www.uio.no
-[^this_is_a_unique_footnote_label]: In footnotes you can write anything tangentially related.
+### iii
+Clipping is done for performance reasons, avoiding unnecessary rendering of geometry that the user cannot see.
 
-* This
-* is
-* a
-* unordered
-* list
+## b)
+![culling](images/culling.png)
 
-1. This
-1. is
-1. a
-1. ordered
-1. list
-    a. with
-    a. sub
-    a. list
+### i
+The triangle disappears
 
-       with multiple paragraphs
+### ii
+It happens because of culling. Culling is a technique used to prevent drawing sides of a 3d object which are not visible to the user which increases performance.
 
-This is still on the first page
+### iii
+By default culling happens if the vertices of a triangle are not rendered in counter-clockwise order.
 
-`\clearpage`{=latex}
+## c)
 
-<!--
-Above is a raw LaTeX statement.
-Those are included when exporting to LaTeX or PDF, and ignored when exporting to HTML.
--->
+### i
+The depth buffer is used to know which triengles should render on top of the other so that the correct one is visible in that single frame. If we dont clear the buffer some triangles might compare to the previous frame, which could cause some triangles to render when they should not - or vice versa. 
 
-This is on the second page
+### ii
+The fragment buffer runs one for every fragment in the scene. If there are more fragments than pixels, one pixel would be drawn to multiple times.
 
-i) Roman ordered list
-i) Roman ordered list
-i) Roman ordered list
+### iii
+Vertex shaders and fragment shaders.
+The vertex shaders transforms vertices and projects the scene to the camera. 
+The fragment shader determines the color of every fragment in the scene. 
 
-This
-: is a definition
+### iv
+Index buffers are used so that one vertex can be used multiple times as connecting triangles have overlapping vertices.
 
-> this is a
-block quote
+### v
+The offset is used in case you want to have multiple different attributes in the same vertex buffer. You would then specify the offset this attribute starts on.
 
+## d)
 
-This is a paragraph with _inline_ \LaTeX\ style math: $\frac{1}{2}$.
-Below is a math _block_:
+### i
+Changed the values of the color vector in the fragment shader.
 
-$$
-    \int_{a}^{b} f(x)dx
-$$
+![Colored triangles](images/color.png)
 
+### ii
+Multiplied the position vector in the vertex shader by a vec4[-1,-1,1,1] to invert the x and y axis
 
-| This | is  | a   | table |
-| ---- | --- | --- | ----- |
-| 1    | 2   | 3   | 4     |
-| 5    | 6   | 7   | 8     |
+![Mirrored and flipped image](images/mirrorflip.png)
 
-: This is a table caption
-
-This is an inline image with a fixed height:
-![](images/logo.png){height=5em}
-
-Below is a _figure_ (i.e. an image with a caption).
-It floats and may as a result move to a different page depending on the layout.
-
-![
-    Image with caption
-](images/logo.png)
-
-Enable and use the `pandoc-crossref` filter to reference figures, tables and equations.

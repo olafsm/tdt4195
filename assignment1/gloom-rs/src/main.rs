@@ -47,56 +47,44 @@ fn offset<T>(n: u32) -> *const c_void {
     (n * mem::size_of::<T>() as u32) as *const T as *const c_void
 }
 
-// Get a null pointer (equivalent to an offset of 0)
-// ptr::null()
-
-
-// == // Generate your VAO here
 unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
-    // Implement me!
 
-    // * Generate a VAO and bind it
     let mut VAO:u32 = 0;
     gl::GenVertexArrays(1, &mut VAO);
     gl::BindVertexArray(VAO);
     
-    // * Generate a VBO and bind it
     let mut VBO:u32 = 0;
     gl::GenBuffers(1, &mut VBO);
     gl::BindBuffer(gl::ARRAY_BUFFER, VBO);
 
-    // * Fill it with data
     gl::BufferData(
         gl::ARRAY_BUFFER, 
         byte_size_of_array(vertices), 
-        vertices.as_ptr() as *const gl::types::GLvoid, 
+        pointer_to_array(vertices), 
         gl::STATIC_DRAW,
     );
 
-    // * Configure a VAP for the data and enable it
     gl::VertexAttribPointer(
         0, 
         3, 
         gl::FLOAT, 
         gl::FALSE, 
-        0,//3*size_of::<f32>(), 
+        0,
         ptr::null()
     );
     gl::EnableVertexAttribArray(0);
 
-    // * Generate a IBO and bind it
     let mut IBO:u32 = 0;
-    gl::GenBuffers(1 as i32, &mut IBO);
+    gl::GenBuffers(1, &mut IBO);
     gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, IBO);
 
-    // * Fill it with data
     gl::BufferData(
         gl::ELEMENT_ARRAY_BUFFER, 
         byte_size_of_array(indices),
-        indices.as_ptr() as *const gl::types::GLvoid,
+        pointer_to_array(indices),
         gl::STATIC_DRAW 
     );
-    // * Return the ID of the VAO
+
     VAO
 }
 
@@ -160,7 +148,6 @@ fn main() {
             println!("GLSL\t: {}", util::get_gl_string(gl::SHADING_LANGUAGE_VERSION));
         }
 
-        // == // Set up your VAO around here
         let vertices:Vec<f32> = vec![
             // top left
             -0.9, 0.9,0.,
@@ -188,21 +175,19 @@ fn main() {
             -0.4,-0.2,0.4,
         ];
 
-        let n_triangles:u32 = vertices.len() as u32/3;
-        let indices:Vec<u32> = (0..n_triangles).collect();
-        println!("Indices: {}", indices.len());
+        let vertices_task2:Vec<f32> = vec![
+            0.6, -0.8, -1.2,
+            0.,0.4,0.,
+            -0.8,-0.2,1.2
+        ];
+
+        let mut indices:Vec<u32> = (0..vertices.len() as u32/3).collect();
+        indices.splice(..3, [2,1,0]);
+
+
         let my_vao = unsafe { 
             create_vao(&vertices,&indices) 
         };
-
-        // == // Set up your shaders here
-
-        // Basic usage of shader helper:
-        // The example code below creates a 'shader' object.
-        // It which contains the field `.program_id` and the method `.activate()`.
-        // The `.` in the path is relative to `Cargo.toml`.
-        // This snippet is not enough to do the exercise, and will need to be modified (outside
-        // of just using the correct path), but it only needs to be called once
 
         let simple_shader: Shader = unsafe {
             shader::ShaderBuilder::new()
@@ -213,6 +198,7 @@ fn main() {
         unsafe {
             simple_shader.activate()
         }
+
         // Used to demonstrate keyboard handling for exercise 2.
         let mut _arbitrary_number = 0.0; // feel free to remove
 
@@ -277,9 +263,13 @@ fn main() {
 
 
                 // == // Issue the necessary gl:: commands to draw your scene here
-                unsafe {
-                    gl::DrawArrays(gl::TRIANGLES, 0, indices.len() as i32);
-                }
+                gl::BindVertexArray(my_vao);
+                gl::DrawElements(
+                    gl::TRIANGLES, 
+                    indices.len() as i32,
+                    gl::UNSIGNED_INT,
+                    ptr::null()
+                );
                   
 
 
