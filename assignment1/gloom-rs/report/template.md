@@ -2,7 +2,7 @@
 # This is a YAML preamble, defining pandoc meta-variables.
 # Reference: https://pandoc.org/MANUAL.html#variables
 # Change them as you see fit.
-title: TDT4195 Exercise 1
+title: TDT4195 Exercise 2
 author:
 - Ola Fivelstad Smaaberg
 date: \today # This is a latex command, ignored for HTML output
@@ -32,10 +32,10 @@ This is a HTML-style comment, not visible in the final PDF.
 In code
 
 ## b)
-In code
+![Triangles where vertices have tifferent colors](images/colorful_triangles.png)
 
 ## c)
-![5 disctinct triangles](images/task_c_5_triangles.png)
+![Blending](images/blending.png)
 
 # Task 2
 

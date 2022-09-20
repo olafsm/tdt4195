@@ -6,9 +6,11 @@
 #![allow(unused_assignments)]
 #![allow(unused_variables)]
 extern crate nalgebra_glm as glm;
+use std::str::FromStr;
 use std::{ mem, ptr, os::raw::c_void };
 use std::thread;
 use std::sync::{Mutex, Arc, RwLock};
+use std::fmt::Debug;
 
 mod shader;
 mod util;
@@ -47,7 +49,7 @@ fn offset<T>(n: u32) -> *const c_void {
     (n * mem::size_of::<T>() as u32) as *const T as *const c_void
 }
 
-unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
+unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) -> u32 {
 
     let mut VAO:u32 = 0;
     gl::GenVertexArrays(1, &mut VAO);
@@ -56,7 +58,6 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     let mut VBO:u32 = 0;
     gl::GenBuffers(1, &mut VBO);
     gl::BindBuffer(gl::ARRAY_BUFFER, VBO);
-
     gl::BufferData(
         gl::ARRAY_BUFFER, 
         byte_size_of_array(vertices), 
@@ -74,10 +75,30 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     );
     gl::EnableVertexAttribArray(0);
 
+    let mut CBO:u32 = 0;
+    gl::GenBuffers(1, &mut CBO);
+    gl::BindBuffer(gl::ARRAY_BUFFER, CBO);
+    gl::BufferData(
+        gl::ARRAY_BUFFER, 
+        byte_size_of_array(colors), 
+        pointer_to_array(colors), 
+        gl::STATIC_DRAW,
+    );
+
+
+    gl::VertexAttribPointer(
+        1, 
+        4, 
+        gl::FLOAT, 
+        gl::FALSE, 
+        4 * size_of::<f32>(),
+        ptr::null()
+    );
+    gl::EnableVertexAttribArray(1);
+
     let mut IBO:u32 = 0;
     gl::GenBuffers(1, &mut IBO);
     gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, IBO);
-
     gl::BufferData(
         gl::ELEMENT_ARRAY_BUFFER, 
         byte_size_of_array(indices),
@@ -85,9 +106,21 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
         gl::STATIC_DRAW 
     );
 
+
+
     VAO
 }
 
+fn get_values_from_str<T>(filename:&str)-> Vec<T> 
+where T: std::str::FromStr, <T as FromStr>::Err: Debug
+{
+    let vertices:Vec<T> = filename
+        .split(',')
+        .filter(|&i| !i.trim().is_empty())
+        .map(|i| i.trim().parse::<T>().unwrap())
+        .collect();
+    vertices
+}
 
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
@@ -148,45 +181,15 @@ fn main() {
             println!("GLSL\t: {}", util::get_gl_string(gl::SHADING_LANGUAGE_VERSION));
         }
 
-        let vertices:Vec<f32> = vec![
-            // top left
-            -0.9, 0.9,0.,
-            -0.9, 0.05,0.,
-            -0.05,0.9,0.,
-
-            // top right
-            0.9, 0.9,0.,
-            0.05,0.9,0.,
-            0.9, 0.05,0.,
-                        
-            // bottom right
-            0.9, -0.9,0.,
-            0.9, -0.05,0.,
-            0.05,-0.9,0.,
-
-            // bottom left
-            -0.9, -0.9,0.,
-            -0.05,-0.9,0.,
-            -0.9, -0.05,0.,
-
-            // middle
-            0.3,-0.4,-0.4,
-            0., 0.4, 0.,
-            -0.4,-0.2,0.4,
-        ];
-
-        let vertices_task2:Vec<f32> = vec![
-            0.6, -0.8, -1.2,
-            0.,0.4,0.,
-            -0.8,-0.2,1.2
-        ];
+        let vertices:Vec<f32> = get_values_from_str(include_str!("../inputs/vertices_ass2_task2.txt"));
 
         let mut indices:Vec<u32> = (0..vertices.len() as u32/3).collect();
-        indices.splice(..3, [2,1,0]);
-
+        //indices.splice(..3, [2,1,0]);
+        
+        let mut colors:Vec<f32> = get_values_from_str(include_str!("../inputs/colors_ass2_task2.txt"));
 
         let my_vao = unsafe { 
-            create_vao(&vertices,&indices) 
+            create_vao(&vertices,&indices, &colors)
         };
 
         let simple_shader: Shader = unsafe {
