@@ -32,65 +32,44 @@ This is a HTML-style comment, not visible in the final PDF.
 In code
 
 ## b)
-![Triangles where vertices have tifferent colors](images/colorful_triangles.png)
 
-## c)
-![Blending](images/blending.png)
+### i
+
+OpenGL interpolates the correct value of the colors using barycentric coordinates. Barycentric coordinates expresses any coordinate on a triangle as a set of three scalars, one for the weight of each vertex in the triangle. The color value of each pixel is then calulated by taking the weighted average of each vertex color according to the barycentric coordinate. 
+![Triangles where vertices have different colors](images/colorful_triangles.png)
 
 # Task 2
 
 ## a)
-![clipping](images/clipping.png)
-
-### i
-The phenomenon is called clipping
-
-### ii
-Clipping occurs when the triangle is drawn outside the clip space, -1.0 to 1.0 in the x, y and z axis
-
-### iii
-Clipping is done for performance reasons, avoiding unnecessary rendering of geometry that the user cannot see.
+![Blending](images/blending2.png)
 
 ## b)
-![culling](images/culling.png)
 
-### i
-The triangle disappears
+### i)
+When changing the order of the colors, the last color to be drawn is major color for the overlapping part. 
 
-### ii
-It happens because of culling. Culling is a technique used to prevent drawing sides of a 3d object which are not visible to the user which increases performance.
+### ii)
 
-### iii
-By default culling happens if the vertices of a triangle are not rendered in counter-clockwise order.
+When swapping z-index only 2 of the colors appear to be blending. A depth test is performed on each pixel in the framebuffer comparing it to the current pixel on screen. If the pixel in the depth buffer has a higher value than the current one it is discarded. This explains why only 2 colors are blended in the overlapping region.
+
+
+# Task 3
+
+## a) 
+in code
+
+## b)
+Changing the a value scales the x-axis
+
+Changing the e value scales the y-axis
+
+Changing the b value sheares the x-axis
+
+Changing the d value sheares the y-axis
+
+Changing the c value translates the x-axis
+
+Changing the f value translates the y-axis
 
 ## c)
-
-### i
-The depth buffer is used to know which triengles should render on top of the other so that the correct one is visible in that single frame. If we dont clear the buffer some triangles might compare to the previous frame, which could cause some triangles to render when they should not - or vice versa. 
-
-### ii
-The fragment buffer runs one for every fragment in the scene. If there are more fragments than pixels, one pixel would be drawn to multiple times.
-
-### iii
-Vertex shaders and fragment shaders.
-The vertex shaders transforms vertices and projects the scene to the camera. 
-The fragment shader determines the color of every fragment in the scene. 
-
-### iv
-Index buffers are used so that one vertex can be used multiple times as connecting triangles have overlapping vertices.
-
-### v
-The offset is used in case you want to have multiple different attributes in the same vertex buffer. You would then specify the offset this attribute starts on.
-
-## d)
-
-### i
-Changed the values of the color vector in the fragment shader.
-
-![Colored triangles](images/color.png)
-
-### ii
-Multiplied the position vector in the vertex shader by a vec4[-1,-1,1,1] to invert the x and y axis
-
-![Mirrored and flipped image](images/mirrorflip.png)
-
+Shearing and scaling change the size of the triangles, which a rotation would not do. 

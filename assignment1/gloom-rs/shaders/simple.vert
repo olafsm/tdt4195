@@ -2,7 +2,7 @@
 
 in layout(location=0) vec3 position;
 in layout(location=1) vec4 in_color;
-
+uniform layout(location=2)float x;
 out vec4 vColor;
 
 void main()
@@ -17,6 +17,7 @@ void main()
     float c = 0;
     float f = 0;
 
+
     mat4 matrix = mat4(
         a,b,0,c,
         d,e,0,f,
@@ -24,6 +25,6 @@ void main()
         0,0,0,1
     );
     gl_Position = vec4(position, 1.0f);
-    gl_Position *= matrix;
+    gl_Position = gl_Position*matrix;
     //gl_Position *= vec4(-1.0f,-1.0f,1.0f,1.0f);
 }

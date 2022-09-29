@@ -209,12 +209,18 @@ fn main() {
         // The main rendering loop
         let first_frame_time = std::time::Instant::now();
         let mut prevous_frame_time = first_frame_time;
+
+        let cname = std::ffi::CString::new("x").expect("CString::new failed");
+        let mut x:f32 = 0.5;
+        let mut y:f32 = -0.1;
         loop {
             // Compute time passed since the previous frame and since the start of the program
             let now = std::time::Instant::now();
             let elapsed = now.duration_since(first_frame_time).as_secs_f32();
             let delta_time = now.duration_since(prevous_frame_time).as_secs_f32();
-            prevous_frame_time = now;
+            unsafe {
+                gl::Uniform1f(2,elapsed.sin());
+            }
 
             // Handle resize events
             if let Ok(mut new_size) = window_size.lock() {
