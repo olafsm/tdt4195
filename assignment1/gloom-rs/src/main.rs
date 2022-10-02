@@ -15,6 +15,9 @@ use std::fmt::Debug;
 mod shader;
 mod util;
 
+mod mesh;
+use mesh::Mesh;
+
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
 use shader::Shader;
@@ -95,6 +98,27 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>)
         ptr::null()
     );
     gl::EnableVertexAttribArray(1);
+
+    //let mut NBO:u32 = 0;
+    //gl::GenBuffers(1, &mut NBO);
+    //gl::BindBuffer(gl::ARRAY_BUFFER, NBO);
+    //gl::BufferData(
+    //    gl::ARRAY_BUFFER, 
+    //    byte_size_of_array(normals), 
+    //    pointer_to_array(normals), 
+    //    gl::STATIC_DRAW,
+    //);
+//
+//
+    //gl::VertexAttribPointer(
+    //    2, 
+    //    3, 
+    //    gl::FLOAT, 
+    //    gl::FALSE, 
+    //    3 * size_of::<f32>(),
+    //    ptr::null()
+    //);
+    //gl::EnableVertexAttribArray(2);
 
     let mut IBO:u32 = 0;
     gl::GenBuffers(1, &mut IBO);
@@ -180,6 +204,7 @@ fn main() {
             println!("OpenGL\t: {}", util::get_gl_string(gl::VERSION));
             println!("GLSL\t: {}", util::get_gl_string(gl::SHADING_LANGUAGE_VERSION));
         }
+        let terrain:Mesh = mesh::Terrain::load("resources/lunarsurface.obj");
 
         let vertices:Vec<f32> = get_values_from_str(include_str!("../inputs/vertices_ass2_task2.txt"));
 
@@ -190,6 +215,8 @@ fn main() {
 
         let my_vao = unsafe { 
             create_vao(&vertices,&indices, &colors)
+//            create_vao(&terrain.normals,&terrain.indices, &terrain.colors, &terrain.normals)
+
         };
 
         let simple_shader: Shader = unsafe {
@@ -211,16 +238,21 @@ fn main() {
         let mut prevous_frame_time = first_frame_time;
 
         let cname = std::ffi::CString::new("x").expect("CString::new failed");
-        let mut x:f32 = 0.5;
-        let mut y:f32 = -0.1;
+        
+        let mut x:f32 = 0.;
+        let mut y:f32 = 0.;
+        let mut z:f32 = 0.;
+
+        let mut yaw:f32 = 0.;
+        let mut pitch:f32 = 0.;
+
+        let mut sensitivity:f32 = 0.001;
+
         loop {
             // Compute time passed since the previous frame and since the start of the program
             let now = std::time::Instant::now();
             let elapsed = now.duration_since(first_frame_time).as_secs_f32();
             let delta_time = now.duration_since(prevous_frame_time).as_secs_f32();
-            unsafe {
-                gl::Uniform1f(2,elapsed.sin());
-            }
 
             // Handle resize events
             if let Ok(mut new_size) = window_size.lock() {
@@ -235,24 +267,55 @@ fn main() {
 
             // Handle keyboard input
             if let Ok(keys) = pressed_keys.lock() {
+                let dT = delta_time*sensitivity;
                 for key in keys.iter() {
                     match key {
                         // The `VirtualKeyCode` enum is defined here:
                         //    https://docs.rs/winit/0.25.0/winit/event/enum.VirtualKeyCode.html
-
                         VirtualKeyCode::A => {
-                            _arbitrary_number += delta_time;
+                            x -= dT;
                         }
                         VirtualKeyCode::D => {
-                            _arbitrary_number -= delta_time;
+                            x += dT;
                         }
-
-
+                        VirtualKeyCode::W => {
+                            z += dT;
+                        }
+                        VirtualKeyCode::S => {
+                            z -= dT;
+                        }
+                        VirtualKeyCode::LShift => {
+                            y -= dT;
+                        }
+                        VirtualKeyCode::Space => {
+                            y += dT;
+                        }
+                        VirtualKeyCode::Left => {
+                            yaw += delta_time*0.05;
+                        }
+                        VirtualKeyCode::Right => {
+                            yaw -= delta_time*0.05;
+                        }
+                        VirtualKeyCode::Up => {
+                            pitch += delta_time*0.05;
+                        }
+                        VirtualKeyCode::Down => {
+                            pitch -= delta_time*0.05;
+                        }
+                        VirtualKeyCode::Comma => {
+                            sensitivity -= 0.0001;
+                        }
+                        VirtualKeyCode::Colon => {
+                            sensitivity += 0.0001;
+                        }
+                        
                         // default handler:
                         _ => { }
                     }
                 }
+                println!("x: {x} y: {y} z: {z} - yaw: {yaw} pitch: {pitch}");
             }
+            
             // Handle mouse movement. delta contains the x and y movement of the mouse since last frame in pixels
             if let Ok(mut delta) = mouse_delta.lock() {
 
@@ -263,9 +326,27 @@ fn main() {
             }
 
             // == // Please compute camera transforms here (exercise 2 & 3)
+            
+            let mut trans_matrix: glm::Mat4 = glm::identity();
 
+
+            let ct:glm::Mat4 = glm::translation(&glm::vec3(x,y,z));
+            let cyaw:glm::Mat4 = glm::rotation(yaw.to_radians(), &glm::vec3(0., 1., 0.));
+            let cpitch:glm::Mat4 = glm::rotation(pitch.to_radians(), &glm::vec3(1., 0., 0.));
+
+            println!("{:?}",ct);
+            trans_matrix = cyaw     * trans_matrix;
+            trans_matrix = cpitch   * trans_matrix;
+
+            trans_matrix = ct       * trans_matrix;
+            trans_matrix = glm::translation(&glm::vec3(-1.,-1.,-1.)) *trans_matrix;
+            let perspective_mat: glm::Mat4 = glm::perspective(1., 1., -2., 100.);       
+            trans_matrix = perspective_mat * trans_matrix;
 
             unsafe {
+                
+                gl::UniformMatrix4fv(3, 1, gl::FALSE, (trans_matrix).as_ptr());
+
                 // Clear the color and depth buffers
                 gl::ClearColor(0.035, 0.046, 0.078, 1.0); // night sky, full opacity
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
@@ -275,7 +356,7 @@ fn main() {
                 gl::BindVertexArray(my_vao);
                 gl::DrawElements(
                     gl::TRIANGLES, 
-                    indices.len() as i32,
+                    terrain.index_count,
                     gl::UNSIGNED_INT,
                     ptr::null()
                 );
