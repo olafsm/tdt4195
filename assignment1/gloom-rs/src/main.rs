@@ -238,7 +238,7 @@ fn main() {
         let mut prevous_frame_time = first_frame_time;
 
         let cname = std::ffi::CString::new("x").expect("CString::new failed");
-        
+
         let mut x:f32 = 0.;
         let mut y:f32 = 0.;
         let mut z:f32 = 0.;
@@ -246,7 +246,6 @@ fn main() {
         let mut yaw:f32 = 0.;
         let mut pitch:f32 = 0.;
 
-        let mut sensitivity:f32 = 0.001;
 
         loop {
             // Compute time passed since the previous frame and since the start of the program
@@ -267,53 +266,50 @@ fn main() {
 
             // Handle keyboard input
             if let Ok(keys) = pressed_keys.lock() {
-                let dT = delta_time*sensitivity;
+                let move_sens = delta_time*0.005;
+                let rot_sens = delta_time*0.1;
                 for key in keys.iter() {
                     match key {
                         // The `VirtualKeyCode` enum is defined here:
                         //    https://docs.rs/winit/0.25.0/winit/event/enum.VirtualKeyCode.html
                         VirtualKeyCode::A => {
-                            x -= dT;
+                            x += move_sens;
                         }
                         VirtualKeyCode::D => {
-                            x += dT;
+                            x -= move_sens;
                         }
                         VirtualKeyCode::W => {
-                            z += dT;
+                            z += move_sens;
                         }
                         VirtualKeyCode::S => {
-                            z -= dT;
+                            z -= move_sens;
                         }
                         VirtualKeyCode::LShift => {
-                            y -= dT;
+                            y -= move_sens;
                         }
                         VirtualKeyCode::Space => {
-                            y += dT;
+                            y += move_sens;
                         }
                         VirtualKeyCode::Left => {
-                            yaw += delta_time*0.05;
+                            yaw += rot_sens;
                         }
                         VirtualKeyCode::Right => {
-                            yaw -= delta_time*0.05;
+                            yaw -= rot_sens;
                         }
                         VirtualKeyCode::Up => {
-                            pitch += delta_time*0.05;
+                            pitch += rot_sens;
                         }
                         VirtualKeyCode::Down => {
-                            pitch -= delta_time*0.05;
-                        }
-                        VirtualKeyCode::Comma => {
-                            sensitivity -= 0.0001;
-                        }
-                        VirtualKeyCode::Colon => {
-                            sensitivity += 0.0001;
+                            pitch -= rot_sens;
                         }
                         
                         // default handler:
                         _ => { }
                     }
                 }
-                println!("x: {x} y: {y} z: {z} - yaw: {yaw} pitch: {pitch}");
+                //println!("x: {x} y: {y} z: {z} - yaw: {yaw} pitch: {pitch}");
+                //context.window().set_title(format!("x: {x:.2} y: {y:.2} z: {z:.2} - yaw: {yaw:.2} pitch: {pitch:.2}").as_str());
+                
             }
             
             // Handle mouse movement. delta contains the x and y movement of the mouse since last frame in pixels
@@ -330,17 +326,16 @@ fn main() {
             let mut trans_matrix: glm::Mat4 = glm::identity();
 
 
-            let ct:glm::Mat4 = glm::translation(&glm::vec3(x,y,z));
+            let ct:glm::Mat4 = glm::translation(&glm::vec3(x,y,z-2.));
             let cyaw:glm::Mat4 = glm::rotation(yaw.to_radians(), &glm::vec3(0., 1., 0.));
             let cpitch:glm::Mat4 = glm::rotation(pitch.to_radians(), &glm::vec3(1., 0., 0.));
 
-            println!("{:?}",ct);
             trans_matrix = cyaw     * trans_matrix;
             trans_matrix = cpitch   * trans_matrix;
-
+            
             trans_matrix = ct       * trans_matrix;
-            trans_matrix = glm::translation(&glm::vec3(-1.,-1.,-1.)) *trans_matrix;
-            let perspective_mat: glm::Mat4 = glm::perspective(1., 1., -2., 100.);       
+
+            let perspective_mat: glm::Mat4 = glm::perspective(1., 1., 1., 100.);       
             trans_matrix = perspective_mat * trans_matrix;
 
             unsafe {

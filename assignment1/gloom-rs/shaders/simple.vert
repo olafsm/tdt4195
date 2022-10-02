@@ -12,7 +12,6 @@ void main()
 {
     vColor = in_color;
   //  vNormal = in_normal;
-    gl_Position = vec4(position, 1.0f);
-    gl_Position = gl_Position*trans_mat;
+    gl_Position = trans_mat*vec4(position, 1.0f);
     //gl_Position *= vec4(-1.0f,-1.0f,1.0f,1.0f);
 }
