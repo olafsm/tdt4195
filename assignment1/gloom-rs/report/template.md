@@ -44,7 +44,7 @@ In code
 # Task 2
 
 ## a)
-![Blending](images/blending2.png)
+![Helicopter drawn using scene graph](images/heliscenegraph.png)
 
 ## b)
 

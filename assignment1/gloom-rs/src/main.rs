@@ -224,13 +224,15 @@ fn main() {
         let mut h_main_rotor = SceneNode::from_vao(h_main_rotor_vao, heli.main_rotor.index_count); 
         let mut h_tail_rotor = SceneNode::from_vao(h_tail_rotor_vao, heli.tail_rotor.index_count); 
         
+        h_tail_rotor.reference_point = glm::vec3(0.35, 2.3, 10.4);
+        h_main_rotor.reference_point = glm::vec3(0., 10., 0.);
         root.add_child(&h_body);
         h_body.add_child(&h_door);
         h_body.add_child(&h_main_rotor);
         h_body.add_child(&h_tail_rotor);
 
         root.print();
-        
+
         let simple_shader: Shader = unsafe {
             shader::ShaderBuilder::new()
             .attach_file("shaders/simple.vert")
@@ -352,32 +354,17 @@ fn main() {
             trans_matrix = perspective_mat * trans_matrix;
 
             unsafe {
-                
-                gl::UniformMatrix4fv(3, 1, gl::FALSE, (trans_matrix).as_ptr());
-
                 // Clear the color and depth buffers
                 gl::ClearColor(0.035, 0.046, 0.078, 1.0); // night sky, full opacity
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
+                gl::UniformMatrix4fv(3, 1, gl::FALSE, (trans_matrix).as_ptr());
 
                 // == // Issue the necessary gl:: commands to draw your scene here
                 gl::BindVertexArray(surface_vao);
                 gl::DrawElements(gl::TRIANGLES, terrain.index_count,gl::UNSIGNED_INT,ptr::null());
 
-                gl::BindVertexArray(h_body_vao);
-                gl::DrawElements(gl::TRIANGLES, heli.body.index_count,gl::UNSIGNED_INT,ptr::null());
-
-                gl::BindVertexArray(h_door_vao);
-                gl::DrawElements(gl::TRIANGLES, heli.door.index_count,gl::UNSIGNED_INT,ptr::null());
-
-                gl::BindVertexArray(h_main_rotor_vao);
-                gl::DrawElements(gl::TRIANGLES, heli.main_rotor.index_count,gl::UNSIGNED_INT,ptr::null());
-
-                gl::BindVertexArray(h_tail_rotor_vao);
-                gl::DrawElements(gl::TRIANGLES, heli.tail_rotor.index_count,gl::UNSIGNED_INT,ptr::null());
-
-
-
+                draw_scene(&root, &trans_matrix, &glm::identity());
             }
 
             // Display the new color buffer on the display
@@ -461,3 +448,21 @@ fn main() {
         }
     });
 }
+
+
+unsafe fn draw_scene(node: &scene_graph::SceneNode,
+    view_projection_matrix: &glm::Mat4,
+    transformation_so_far: &glm::Mat4) {
+    // Check if node is drawable, if so: set uniforms and draw
+    if node.index_count != -1 {
+        gl::UniformMatrix4fv(3, 1, gl::FALSE, (view_projection_matrix).as_ptr());
+        gl::BindVertexArray(node.vao_id);
+        gl::DrawElements(gl::TRIANGLES, node.index_count,gl::UNSIGNED_INT,ptr::null());
+    }
+
+    // Recurse
+    for &child in &node.children {
+        draw_scene(&*child, view_projection_matrix, transformation_so_far);
+    }
+    }
+    
