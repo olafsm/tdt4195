@@ -32,11 +32,14 @@ This is a HTML-style comment, not visible in the final PDF.
 In code
 
 ## b)
+In code
+
+## c)
+![Immense natural beauty](images/crater.png)
 
 ### i
 
-OpenGL interpolates the correct value of the colors using barycentric coordinates. Barycentric coordinates expresses any coordinate on a triangle as a set of three scalars, one for the weight of each vertex in the triangle. The color value of each pixel is then calulated by taking the weighted average of each vertex color according to the barycentric coordinate. 
-![Triangles where vertices have different colors](images/colorful_triangles.png)
+![Correctly (hopefully) lit lunar surface](images/litSurface.png)
 
 # Task 2
 

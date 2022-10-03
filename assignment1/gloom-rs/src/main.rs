@@ -15,8 +15,11 @@ use std::fmt::Debug;
 mod shader;
 mod util;
 
+mod scene_graph;
+use scene_graph::SceneNode;
+
 mod mesh;
-use mesh::Mesh;
+use mesh::{Mesh, Helicopter};
 
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -52,7 +55,7 @@ fn offset<T>(n: u32) -> *const c_void {
     (n * mem::size_of::<T>() as u32) as *const T as *const c_void
 }
 
-unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) -> u32 {
+unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>,normals: &Vec<f32>) -> u32 {
 
     let mut VAO:u32 = 0;
     gl::GenVertexArrays(1, &mut VAO);
@@ -99,26 +102,26 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>)
     );
     gl::EnableVertexAttribArray(1);
 
-    //let mut NBO:u32 = 0;
-    //gl::GenBuffers(1, &mut NBO);
-    //gl::BindBuffer(gl::ARRAY_BUFFER, NBO);
-    //gl::BufferData(
-    //    gl::ARRAY_BUFFER, 
-    //    byte_size_of_array(normals), 
-    //    pointer_to_array(normals), 
-    //    gl::STATIC_DRAW,
-    //);
-//
-//
-    //gl::VertexAttribPointer(
-    //    2, 
-    //    3, 
-    //    gl::FLOAT, 
-    //    gl::FALSE, 
-    //    3 * size_of::<f32>(),
-    //    ptr::null()
-    //);
-    //gl::EnableVertexAttribArray(2);
+    let mut NBO:u32 = 0;
+    gl::GenBuffers(1, &mut NBO);
+    gl::BindBuffer(gl::ARRAY_BUFFER, NBO);
+    gl::BufferData(
+        gl::ARRAY_BUFFER, 
+        byte_size_of_array(normals), 
+        pointer_to_array(normals), 
+        gl::STATIC_DRAW,
+    );
+
+
+    gl::VertexAttribPointer(
+        2, 
+        3, 
+        gl::FLOAT, 
+        gl::FALSE, 
+        3 * size_of::<f32>(),
+        ptr::null()
+    );
+    gl::EnableVertexAttribArray(2);
 
     let mut IBO:u32 = 0;
     gl::GenBuffers(1, &mut IBO);
@@ -205,20 +208,29 @@ fn main() {
             println!("GLSL\t: {}", util::get_gl_string(gl::SHADING_LANGUAGE_VERSION));
         }
         let terrain:Mesh = mesh::Terrain::load("resources/lunarsurface.obj");
+        let heli:Helicopter = mesh::Helicopter::load("resources/helicopter.obj");
 
-        let vertices:Vec<f32> = get_values_from_str(include_str!("../inputs/vertices_ass2_task2.txt"));
-
-        let mut indices:Vec<u32> = (0..vertices.len() as u32/3).collect();
-        //indices.splice(..3, [2,1,0]);
+        let surface_vao = unsafe { create_vao(&terrain.vertices,&terrain.indices, &terrain.colors, &terrain.normals) };
         
-        let mut colors:Vec<f32> = get_values_from_str(include_str!("../inputs/colors_ass2_task2.txt"));
+        let h_body_vao = unsafe { create_vao(&heli.body.vertices,&heli.body.indices, &heli.body.colors, &heli.body.normals) };
+        let h_door_vao = unsafe { create_vao(&heli.door.vertices,&heli.door.indices, &heli.door.colors, &heli.door.normals) };
+        let h_main_rotor_vao = unsafe { create_vao(&heli.main_rotor.vertices,&heli.main_rotor.indices, &heli.main_rotor.colors, &heli.main_rotor.normals) };
+        let h_tail_rotor_vao = unsafe { create_vao(&heli.tail_rotor.vertices,&heli.tail_rotor.indices, &heli.tail_rotor.colors, &heli.tail_rotor.normals) };
 
-        let my_vao = unsafe { 
-            create_vao(&vertices,&indices, &colors)
-//            create_vao(&terrain.normals,&terrain.indices, &terrain.colors, &terrain.normals)
+        let mut root = SceneNode::new();
+        
+        let mut h_body = SceneNode::from_vao(h_body_vao, heli.body.index_count); 
+        let mut h_door = SceneNode::from_vao(h_door_vao, heli.door.index_count); 
+        let mut h_main_rotor = SceneNode::from_vao(h_main_rotor_vao, heli.main_rotor.index_count); 
+        let mut h_tail_rotor = SceneNode::from_vao(h_tail_rotor_vao, heli.tail_rotor.index_count); 
+        
+        root.add_child(&h_body);
+        h_body.add_child(&h_door);
+        h_body.add_child(&h_main_rotor);
+        h_body.add_child(&h_tail_rotor);
 
-        };
-
+        root.print();
+        
         let simple_shader: Shader = unsafe {
             shader::ShaderBuilder::new()
             .attach_file("shaders/simple.vert")
@@ -239,12 +251,12 @@ fn main() {
 
         let cname = std::ffi::CString::new("x").expect("CString::new failed");
 
-        let mut x:f32 = 0.;
-        let mut y:f32 = 0.;
-        let mut z:f32 = 0.;
+        let mut x:f32 = 19.;
+        let mut y:f32 = -13.;
+        let mut z:f32 = 10.;
 
-        let mut yaw:f32 = 0.;
-        let mut pitch:f32 = 0.;
+        let mut yaw:f32 = 113.;
+        let mut pitch:f32 = 21.;
 
 
         loop {
@@ -252,6 +264,7 @@ fn main() {
             let now = std::time::Instant::now();
             let elapsed = now.duration_since(first_frame_time).as_secs_f32();
             let delta_time = now.duration_since(prevous_frame_time).as_secs_f32();
+            prevous_frame_time = now;
 
             // Handle resize events
             if let Ok(mut new_size) = window_size.lock() {
@@ -266,8 +279,8 @@ fn main() {
 
             // Handle keyboard input
             if let Ok(keys) = pressed_keys.lock() {
-                let move_sens = delta_time*0.005;
-                let rot_sens = delta_time*0.1;
+                let move_sens = delta_time*100.;
+                let rot_sens = delta_time*60.;
                 for key in keys.iter() {
                     match key {
                         // The `VirtualKeyCode` enum is defined here:
@@ -285,10 +298,10 @@ fn main() {
                             z -= move_sens;
                         }
                         VirtualKeyCode::LShift => {
-                            y -= move_sens;
+                            y += move_sens;
                         }
                         VirtualKeyCode::Space => {
-                            y += move_sens;
+                            y -= move_sens;
                         }
                         VirtualKeyCode::Left => {
                             yaw += rot_sens;
@@ -330,12 +343,12 @@ fn main() {
             let cyaw:glm::Mat4 = glm::rotation(yaw.to_radians(), &glm::vec3(0., 1., 0.));
             let cpitch:glm::Mat4 = glm::rotation(pitch.to_radians(), &glm::vec3(1., 0., 0.));
 
+            trans_matrix = ct       * trans_matrix;
             trans_matrix = cyaw     * trans_matrix;
             trans_matrix = cpitch   * trans_matrix;
             
-            trans_matrix = ct       * trans_matrix;
 
-            let perspective_mat: glm::Mat4 = glm::perspective(1., 1., 1., 100.);       
+            let perspective_mat: glm::Mat4 = glm::perspective(1., 1., 1., 10000.);       
             trans_matrix = perspective_mat * trans_matrix;
 
             unsafe {
@@ -348,14 +361,21 @@ fn main() {
 
 
                 // == // Issue the necessary gl:: commands to draw your scene here
-                gl::BindVertexArray(my_vao);
-                gl::DrawElements(
-                    gl::TRIANGLES, 
-                    terrain.index_count,
-                    gl::UNSIGNED_INT,
-                    ptr::null()
-                );
-                  
+                gl::BindVertexArray(surface_vao);
+                gl::DrawElements(gl::TRIANGLES, terrain.index_count,gl::UNSIGNED_INT,ptr::null());
+
+                gl::BindVertexArray(h_body_vao);
+                gl::DrawElements(gl::TRIANGLES, heli.body.index_count,gl::UNSIGNED_INT,ptr::null());
+
+                gl::BindVertexArray(h_door_vao);
+                gl::DrawElements(gl::TRIANGLES, heli.door.index_count,gl::UNSIGNED_INT,ptr::null());
+
+                gl::BindVertexArray(h_main_rotor_vao);
+                gl::DrawElements(gl::TRIANGLES, heli.main_rotor.index_count,gl::UNSIGNED_INT,ptr::null());
+
+                gl::BindVertexArray(h_tail_rotor_vao);
+                gl::DrawElements(gl::TRIANGLES, heli.tail_rotor.index_count,gl::UNSIGNED_INT,ptr::null());
+
 
 
             }
