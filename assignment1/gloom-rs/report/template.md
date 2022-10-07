@@ -47,32 +47,21 @@ In code
 ![Helicopter drawn using scene graph](images/heliscenegraph.png)
 
 ## b)
+# Task 5
 
-### i)
-When changing the order of the colors, the last color to be drawn is major color for the overlapping part. 
+## a)
 
-### ii)
+![Bright side of heli](images/heli_bright_side.png)
 
-When swapping z-index only 2 of the colors appear to be blending. A depth test is performed on each pixel in the framebuffer comparing it to the current pixel on screen. If the pixel in the depth buffer has a higher value than the current one it is discarded. This explains why only 2 colors are blended in the overlapping region.
-
-
-# Task 3
-
-## a) 
-in code
-
-## b)
-Changing the a value scales the x-axis
-
-Changing the e value scales the y-axis
-
-Changing the b value sheares the x-axis
-
-Changing the d value sheares the y-axis
-
-Changing the c value translates the x-axis
-
-Changing the f value translates the y-axis
+![Dark side of heli](images/heli_dark_side.png)
 
 ## c)
-Shearing and scaling change the size of the triangles, which a rotation would not do. 
+
+![Bright side of heli](images/good_light_1.png)
+
+![Bright side of heli](images/good_light_2.png)
+
+
+## c)
+
+![5 helis](images/5_helis.png)

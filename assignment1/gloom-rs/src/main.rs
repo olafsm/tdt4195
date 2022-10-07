@@ -16,7 +16,10 @@ mod shader;
 mod util;
 
 mod scene_graph;
+use glm::normalize;
 use scene_graph::SceneNode;
+
+mod toolbox;
 
 mod mesh;
 use mesh::{Mesh, Helicopter};
@@ -219,20 +222,37 @@ fn main() {
 
         let mut root = SceneNode::new();
         
-        let mut h_body = SceneNode::from_vao(h_body_vao, heli.body.index_count); 
-        let mut h_door = SceneNode::from_vao(h_door_vao, heli.door.index_count); 
-        let mut h_main_rotor = SceneNode::from_vao(h_main_rotor_vao, heli.main_rotor.index_count); 
-        let mut h_tail_rotor = SceneNode::from_vao(h_tail_rotor_vao, heli.tail_rotor.index_count); 
-        
-        h_tail_rotor.reference_point = glm::vec3(0.35, 2.3, 10.4);
-        h_main_rotor.reference_point = glm::vec3(0., 10., 0.);
-        root.add_child(&h_body);
-        h_body.add_child(&h_door);
-        h_body.add_child(&h_main_rotor);
-        h_body.add_child(&h_tail_rotor);
+        let mut surface = SceneNode::from_vao(surface_vao, terrain.index_count);
+        root.add_child(&surface);
+
+        let mut helis:Vec<scene_graph::Node> = vec![];
+        let mut main_rotors:Vec<scene_graph::Node> = vec![];
+        let mut tail_rotors:Vec<scene_graph::Node> = vec![];
+        for i in 0..5 {
+            let mut h_body = SceneNode::from_vao(h_body_vao, heli.body.index_count); 
+            let mut h_door = SceneNode::from_vao(h_door_vao, heli.door.index_count); 
+            let mut h_main_rotor = SceneNode::from_vao(h_main_rotor_vao, heli.main_rotor.index_count); 
+            let mut h_tail_rotor = SceneNode::from_vao(h_tail_rotor_vao, heli.tail_rotor.index_count); 
+            h_tail_rotor.reference_point = glm::vec3(0.35, 2.3, 10.4);
+            h_main_rotor.reference_point = glm::vec3(0., 1., 0.);
+            h_body.reference_point = glm::vec3(0.1,0.1, 0.1);
+            h_door.reference_point = glm::vec3(0., 0., 0.);
+            
+            h_body.position = glm::vec3(0., i as f32 *10., 0.);
+
+            surface.add_child(&h_body);
+            h_body.add_child(&h_door);
+            h_body.add_child(&h_main_rotor);
+            h_body.add_child(&h_tail_rotor);
+            helis.push(h_body);
+            main_rotors.push(h_main_rotor);
+            tail_rotors.push(h_tail_rotor);
+        }
+
+    
 
         root.print();
-
+        println!("Press [T] to toggle free moving camera");
         let simple_shader: Shader = unsafe {
             shader::ShaderBuilder::new()
             .attach_file("shaders/simple.vert")
@@ -253,14 +273,15 @@ fn main() {
 
         let cname = std::ffi::CString::new("x").expect("CString::new failed");
 
-        let mut x:f32 = 19.;
-        let mut y:f32 = -13.;
-        let mut z:f32 = 10.;
+        let mut x:f32 = 70.;
+        let mut y:f32 = -40.;
+        let mut z:f32 = 70.;
 
-        let mut yaw:f32 = 113.;
-        let mut pitch:f32 = 21.;
+        let mut yaw:f32 = 103.;
+        let mut pitch:f32 = 18.;
 
-
+        let mut toggle_camera = true;
+        let mut pause_heli = true;
         loop {
             // Compute time passed since the previous frame and since the start of the program
             let now = std::time::Instant::now();
@@ -306,18 +327,23 @@ fn main() {
                             y -= move_sens;
                         }
                         VirtualKeyCode::Left => {
-                            yaw += rot_sens;
-                        }
-                        VirtualKeyCode::Right => {
                             yaw -= rot_sens;
                         }
-                        VirtualKeyCode::Up => {
-                            pitch += rot_sens;
+                        VirtualKeyCode::Right => {
+                            yaw += rot_sens;
                         }
-                        VirtualKeyCode::Down => {
+                        VirtualKeyCode::Up => {
                             pitch -= rot_sens;
                         }
-                        
+                        VirtualKeyCode::Down => {
+                            pitch += rot_sens;
+                        }
+                        VirtualKeyCode::T => {
+                            toggle_camera = !toggle_camera;
+                        }
+                        VirtualKeyCode::H => {
+                            pause_heli = !pause_heli;
+                        }
                         // default handler:
                         _ => { }
                     }
@@ -339,9 +365,16 @@ fn main() {
             // == // Please compute camera transforms here (exercise 2 & 3)
             
             let mut trans_matrix: glm::Mat4 = glm::identity();
+            let heading = toolbox::simple_heading_animation(elapsed);
 
-
-            let ct:glm::Mat4 = glm::translation(&glm::vec3(x,y,z-2.));
+            let ct:glm::Mat4;
+            if toggle_camera {
+                ct = glm::translation(&glm::vec3(70.-heading.x,y,-heading.z));
+                x = heading.x;
+                z = heading.z;
+            } else {
+                ct = glm::translation(&glm::vec3(x,y,z));
+            }
             let cyaw:glm::Mat4 = glm::rotation(yaw.to_radians(), &glm::vec3(0., 1., 0.));
             let cpitch:glm::Mat4 = glm::rotation(pitch.to_radians(), &glm::vec3(1., 0., 0.));
 
@@ -360,10 +393,17 @@ fn main() {
 
                 gl::UniformMatrix4fv(3, 1, gl::FALSE, (trans_matrix).as_ptr());
 
-                // == // Issue the necessary gl:: commands to draw your scene here
-                gl::BindVertexArray(surface_vao);
-                gl::DrawElements(gl::TRIANGLES, terrain.index_count,gl::UNSIGNED_INT,ptr::null());
+                for i in 0..5 {
+                    helis[i].rotation = glm::vec3(heading.pitch,heading.yaw,heading.roll);
+                    tail_rotors[i].rotation = glm::vec3(elapsed*20., 0., 0.);
+                    main_rotors[i].rotation = glm::vec3(0., elapsed*20., 0.);
+                    if pause_heli {
+                        helis[i].position = glm::vec3(heading.x+i as f32 *20., helis[i].position[1], heading.z+ i as f32 *20.);
+                    }    
+                }
 
+
+                // == // Issue the necessary gl:: commands to draw your scene here
                 draw_scene(&root, &trans_matrix, &glm::identity());
             }
 
@@ -453,16 +493,33 @@ fn main() {
 unsafe fn draw_scene(node: &scene_graph::SceneNode,
     view_projection_matrix: &glm::Mat4,
     transformation_so_far: &glm::Mat4) {
+
+    let mut node_trans:glm::Mat4 = glm::identity();
+
+    // Rotate around rererence point
+    node_trans = glm::translation(&glm::vec3(node.reference_point[0]*-1., node.reference_point[1]*-1., node.reference_point[2]*-1.)) *  node_trans;
+    node_trans = glm::rotation(node.rotation[2], &glm::vec3(0.,0., node.reference_point[2])) *  node_trans; 
+    node_trans = glm::rotation(node.rotation[1], &glm::vec3(0.,node.reference_point[1],0.))  *  node_trans; 
+    node_trans = glm::rotation(node.rotation[0], &glm::vec3(node.reference_point[0],0., 0.)) *  node_trans; 
+    node_trans = glm::translation(&node.reference_point) *  node_trans;
+
+    node_trans = glm::translation(&node.position) * node_trans;
+
+    node_trans = transformation_so_far * node_trans;
+
+
     // Check if node is drawable, if so: set uniforms and draw
     if node.index_count != -1 {
-        gl::UniformMatrix4fv(3, 1, gl::FALSE, (view_projection_matrix).as_ptr());
+        gl::UniformMatrix4fv(3, 1, gl::FALSE, (view_projection_matrix*node_trans).as_ptr());
+        let mut node_3x3:glm::Mat3 = glm::mat4_to_mat3(&node_trans);
+
+        gl::UniformMatrix3fv(4, 1, gl::FALSE, node_3x3.as_ptr());
         gl::BindVertexArray(node.vao_id);
         gl::DrawElements(gl::TRIANGLES, node.index_count,gl::UNSIGNED_INT,ptr::null());
     }
-
     // Recurse
     for &child in &node.children {
-        draw_scene(&*child, view_projection_matrix, transformation_so_far);
+        draw_scene(&*child, &view_projection_matrix, &node_trans);
     }
     }
     
