@@ -2,7 +2,7 @@
 # This is a YAML preamble, defining pandoc meta-variables.
 # Reference: https://pandoc.org/MANUAL.html#variables
 # Change them as you see fit.
-title: TDT4195 Exercise 2
+title: TDT4195 Exercise 3
 author:
 - Ola Fivelstad Smaaberg
 date: \today # This is a latex command, ignored for HTML output
@@ -12,7 +12,7 @@ geometry: margin=4cm
 toc: false
 toc-title: "Table of Contents"
 toc-depth: 2
-numbersections: true
+numbersections: false
 header-includes:
 # The `atkinson` font, requires 'texlive-fontsextra' on arch or the 'atkinson' CTAN package
 # Uncomment this line to enable:
@@ -26,42 +26,32 @@ links-as-notes: true
 This is a HTML-style comment, not visible in the final PDF.
 -->
 
-# Task 1
+## Task 1 c)
 
-## a)
-In code
+![ Immense natural beauty](images/crater.png)
 
-## b)
-In code
+\newpage
+## Task 1 d)
 
-## c)
-![Immense natural beauty](images/crater.png)
+![Correctly (hopefully) lit lunar surface](images/litSurface.png){ width=450px }
 
-### i
+## Task 2 c) 
 
-![Correctly (hopefully) lit lunar surface](images/litSurface.png)
+![Helicopter drawn using scene graph](images/heliscenegraph.png){ width=450px }
 
-# Task 2
+## Task 5a)
 
-## a)
-![Helicopter drawn using scene graph](images/heliscenegraph.png)
+![Bright side of heli](images/heli_bright_side.png){ width=450px }
 
-## b)
-# Task 5
+![Dark side of heli](images/heli_shadow_side.png){ width=450px }
 
-## a)
+## Task 5c)
 
-![Bright side of heli](images/heli_bright_side.png)
+![Bright side of heli](images/good_light_1.png){ width=450px }
 
-![Dark side of heli](images/heli_dark_side.png)
-
-## c)
-
-![Bright side of heli](images/good_light_1.png)
-
-![Bright side of heli](images/good_light_2.png)
+![Bright side of heli](images/good_light_2.png){ width=450px }
 
 
-## c)
+## Task 6 a)
 
 ![5 helis](images/5_helis.png)
